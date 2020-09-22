@@ -21,6 +21,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.android.marsrealestate.network.MarsApi
+import com.example.android.marsrealestate.network.MarsProperty
 import kotlinx.coroutines.*
 
 /**
@@ -29,15 +30,19 @@ import kotlinx.coroutines.*
 class OverviewViewModel : ViewModel() {
 
     // The internal MutableLiveData String that stores the status of the most recent request
-    private val _response = MutableLiveData<String>()
+    private val _status = MutableLiveData<String>()
 
     // The external immutable LiveData for the request status String
-    val response: LiveData<String>
-        get() = _response
+    val status: LiveData<String>
+        get() = _status
 
     //Create a Coroutine Job and Coroutine Scope using Main Dispatcher
     private var viewModelJob = Job()
     private var coroutineScope = CoroutineScope(viewModelJob + Dispatchers.Main)
+
+    private val _property = MutableLiveData<MarsProperty>()
+    val property : LiveData<MarsProperty>
+        get() = _property
 
     /**
      * Call getMarsRealEstateProperties() on init so we can display status immediately.
@@ -54,9 +59,11 @@ class OverviewViewModel : ViewModel() {
             val getPropertiesDeferred = MarsApi.retrofitService.getProperties()
             try{
                 val listResult = getPropertiesDeferred.await()
-                _response.value = "Success ${listResult.size} Mars properties retrieved"
+                if (listResult.isNotEmpty()){
+                    _property.value = listResult[0]
+                }
             }catch (t : Throwable){
-                _response.value = "Failure" + t.message
+                _status.value = "Failure" + t.message
             }
         }
     }
